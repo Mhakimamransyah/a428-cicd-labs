@@ -1,58 +1,33 @@
 node {
-    
+    // Define environment variables
     env.CI = 'true'
 
-    def dockerImage = 'node:16-buster-slim'
+    // Use Docker container for the pipeline
+    docker.image('node:lts-buster-slim').inside('-p 3000:3000') {
 
-    docker.image(dockerImage).inside("-p 3000:3000") {
-        echo "Building..."
         try {
+            // Build stage
             stage('Build') {
                 sh 'npm install'
             }
-        } catch(Exception e) {
-            currentBuild.result = 'FAILURE'
-            error "Build failed: ${e.message}"
-        }
-    }
 
-    docker.image(dockerImage).inside("-p 3000:3000") { 
-        try {
-
-            echo "Testing..."
-
+            // Test stage
             stage('Test') {
                 sh './jenkins/scripts/test.sh'
             }
 
-        } catch(Exception e) {
-            echo "Testing Failure"
-            currentBuild.result = 'FAILURE'
-            throw e
-        }
-    }
-
-    docker.image(dockerImage).inside("-p 3000:3000") {
-        
-        try {
-            
-            echo "Deliver..."
-
+            // Deliver stage
             stage('Deliver') {
                 sh './jenkins/scripts/deliver.sh'
                 // Manual input from user
                 input message: 'Finished using the website? (Click "Proceed" to continue)'
-                
-                echo "Kill..."
-
                 sh './jenkins/scripts/kill.sh'
             }
 
-        } catch(Exception e) {
-            echo "Deliver Failure"
+        } catch (Exception e) {
+            // If any stage fails, catch the exception and mark the build as failed
             currentBuild.result = 'FAILURE'
-            throw e
+            throw e  // Re-throw the exception to fail the build
         }
     }
-
 }
