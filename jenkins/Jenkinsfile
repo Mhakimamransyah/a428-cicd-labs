@@ -1,30 +1,42 @@
-pipeline {
-    agent {
-        docker {
-            image 'node:lts-buster-slim'
-            args '-p 3000:3000'
-        }
-    }
-    environment {
-        CI = 'true'
-    }
-    stages {
-        stage('Build') {
-            steps {
+node {
+    
+    env.CI = 'true'
+
+    def dockerImage = 'node:16-buster-slim'
+
+    docker.image(dockerImage).inside("-p 3000:3000") {
+        echo "Building..."
+        try {
+            stage('Build') {
                 sh 'npm install'
             }
+        } catch(Exception e) {
+            currentBuild.result = 'FAILURE'
+            error "Build failed: ${e.message}"
         }
-        stage('Test') {
-            steps {
+    }
+
+    docker.image(dockerImage).inside("-p 3000:3000") { 
+        try {
+
+            echo "Testing..."
+
+            stage('Test') {
                 sh './jenkins/scripts/test.sh'
             }
-        }
-        stage('Deliver') {
-            steps {
+
+            echo "Deliver..."
+
+            stage('Deliver') {
                 sh './jenkins/scripts/deliver.sh'
+                // Manual input from user
                 input message: 'Finished using the website? (Click "Proceed" to continue)'
                 sh './jenkins/scripts/kill.sh'
             }
+        } catch(Exception e) {
+            currentBuild.result = 'FAILURE'
+            throw e
         }
     }
+
 }
