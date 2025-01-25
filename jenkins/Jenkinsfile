@@ -25,6 +25,17 @@ node {
                 sh './jenkins/scripts/test.sh'
             }
 
+        } catch(Exception e) {
+            echo "Testing Failure"
+            currentBuild.result = 'FAILURE'
+            throw e
+        }
+    }
+
+    docker.image(dockerImage).inside("-p 3000:3000") {
+        
+        try {
+            
             echo "Deliver..."
 
             stage('Deliver') {
@@ -33,7 +44,9 @@ node {
                 input message: 'Finished using the website? (Click "Proceed" to continue)'
                 sh './jenkins/scripts/kill.sh'
             }
+
         } catch(Exception e) {
+            echo "Deliver Failure"
             currentBuild.result = 'FAILURE'
             throw e
         }
