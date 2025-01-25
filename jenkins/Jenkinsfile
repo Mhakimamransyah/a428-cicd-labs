@@ -42,6 +42,9 @@ node {
                 sh './jenkins/scripts/deliver.sh'
                 // Manual input from user
                 input message: 'Finished using the website? (Click "Proceed" to continue)'
+                
+                echo "Kill..."
+
                 sh './jenkins/scripts/kill.sh'
             }
 
