@@ -6,6 +6,11 @@ node {
     docker.image('node:lts-buster-slim').inside('-p 3000:3000') {
 
         try {
+
+            stage('Build') {
+                sh 'pwd'
+            }
+
             // Build stage
             stage('Build') {
                 sh 'npm install'
