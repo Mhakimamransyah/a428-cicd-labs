@@ -1,11 +1,18 @@
 node {
     // Define environment variables
     env.CI = 'true'
+    
 
     // Use Docker container for the pipeline
     docker.image('node:lts-buster-slim').inside('-p 3000:3000') {
 
         try {
+
+            stage('Checkout') {
+                echo 'Checking out source code...'
+                checkout scm
+            }
+
             // Build stage
             stage('Build') {
                 sh 'npm install'
