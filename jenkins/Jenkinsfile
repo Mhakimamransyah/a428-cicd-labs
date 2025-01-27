@@ -1,6 +1,9 @@
 node {
+
+
     // Define environment variables
     env.CI = 'true'
+    env.CD = 'true'
     
 
     // Use Docker container for the pipeline
@@ -9,7 +12,6 @@ node {
         try {
 
             stage('Checkout') {
-                echo 'Checking out source code...'
                 checkout scm
             }
 
@@ -23,18 +25,31 @@ node {
                 sh './jenkins/scripts/test.sh'
             }
 
-            // Deliver stage
-            stage('Deliver') {
-                sh './jenkins/scripts/deliver.sh'
+            // Manual Approval stage
+            stage('Manual Approval') {
                 // Manual input from user
-                input message: 'Finished using the website? (Click "Proceed" to continue)'
+                input message: 'Lanjutkan ke tahap Deploy ? (Click "Proceed" to continue)'
+            }
+
+            // Deliver stage
+            stage('Deploy') {
+                sh './jenkins/scripts/deliver.sh'
+                sleep 60000
                 sh './jenkins/scripts/kill.sh'
             }
 
         } catch (Exception e) {
+            
             // If any stage fails, catch the exception and mark the build as failed
             currentBuild.result = 'FAILURE'
             throw e  // Re-throw the exception to fail the build
+
+        } finally {
+
+            if (currentBuild.result != "FAILURE") {
+                // push to artifact
+                archiveArtifacts 'build/*'
+            }
         }
     }
 }
