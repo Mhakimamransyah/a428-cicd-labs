@@ -35,7 +35,7 @@ node {
             // Deliver stage
             stage('Deploy') {
                 sh './jenkins/scripts/deliver.sh'
-                sleep 60
+                sleep 60 // wait 1 minutes
                 sh './jenkins/scripts/kill.sh'
             }
 
